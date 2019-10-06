@@ -940,7 +940,7 @@ class NotebookApp(JupyterApp):
     @validate('kernel_logger')
     def _validate_kernel_logger(self, proposal):
         import logging.config
-        from ConfigParser import NoSectionError
+        from configparser import NoSectionError
 
         value = proposal['value']
         try:
