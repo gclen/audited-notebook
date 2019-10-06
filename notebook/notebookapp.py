@@ -280,6 +280,7 @@ class NotebookWebApplication(web.Application):
             server_root_dir=root_dir,
             jinja2_env=env,
             terminals_available=False,  # Set later if terminals are available
+            kernel_logger=jupyter_app.kernel_logger,
         )
 
         # allow custom overrides for the tornado web app.
@@ -560,6 +561,7 @@ aliases.update({
     'notebook-dir': 'NotebookApp.notebook_dir',
     'browser': 'NotebookApp.browser',
     'pylab': 'NotebookApp.pylab',
+    'kernel-logger': 'NotebookApp.kernel_logger',
     'gateway-url': 'GatewayClient.url',
 })
 
@@ -929,6 +931,30 @@ class NotebookApp(JupyterApp):
                       BROWSER environment variable to override it.
                       """)
 
+    kernel_logger = Unicode(u'', config=True,
+                            help="""The full path to a logging configuration file with a logger named
+                            kernel_logger. Allows the user to log all code messages to the kernel independent
+                            of the kernel type.
+                            """)
+
+    @validate('kernel_logger')
+    def _validate_kernel_logger(self, proposal):
+        import logging.config
+        from configparser import NoSectionError
+
+        value = proposal['value']
+        try:
+            logging.config.fileConfig(value, disable_existing_loggers=False)
+            k_logger = logging.getLogger('kernel_logger')
+            if k_logger.handlers:
+                return value
+            else:
+                raise TraitError("Logging configuration file passed to --kernel-logger must have"
+                                 "a logger named kernel_logger.")
+        except (AttributeError, NoSectionError):
+            raise TraitError("Logging configuration file {} is not valid. Ensure that it has a kernel_logger specified"
+                             .format(value))
+
     webbrowser_open_new = Integer(2, config=True,
         help=_("""Specify Where to open the notebook on startup. This is the
         `new` argument passed to the standard library method `webbrowser.open`.
@@ -999,6 +1025,7 @@ class NotebookApp(JupyterApp):
         When disabled, equations etc. will appear as their untransformed TeX source.
         """
     )
+
 
     @observe('enable_mathjax')
     def _update_enable_mathjax(self, change):
