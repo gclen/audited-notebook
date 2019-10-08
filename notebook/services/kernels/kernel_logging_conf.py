@@ -1,0 +1,62 @@
+import logging
+import logging.config
+import logging.handlers
+import getpass
+import socket
+from datetime import datetime
+
+class ContextFilter(logging.Filter):
+    def __init__(self):
+        self.hostname = socket.getfqdn()
+        self.user = getpass.getuser()
+    
+    def filter(self, record):
+        record.hostname = self.hostname
+        record.user = self.user
+        record.date = datetime.utcnow().strftime('%Y-%m-%d')
+        return True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(levelname)s:%(message)s'
+        },
+        'audit': {
+            'format': '%(asctime)s %(hostname)s AUDIT_LOG: Date: %(date)s User: %(user)s Code: %(message)s',
+            'datefmt': '%b %d %H:%M:%S'
+        },
+    },
+    'filters': {
+        'audit_add_context': {
+            '()': ContextFilter
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'WARNING',
+            'formatter': 'console',
+        },
+        'audit_handler': {
+            'class': 'logging.StreamHandler',
+            'filters': ['audit_add_context'],
+            'formatter': 'audit',
+            'level': 'INFO',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'WARNING'
+        },
+        'kernel_logger': {
+            'handlers': ['audit_handler'],
+            'level': 'INFO',
+        }
+    }
+}
+
+
+

@@ -124,6 +124,10 @@ class ZMQChannelsHandler(AuthenticatedZMQStreamHandler):
         if logger_conf:
             logging.config.fileConfig(logger_conf, disable_existing_loggers=False)
             return logging.getLogger('kernel_logger')
+        else:
+            from . import kernel_logging_conf
+            logging.config.dictConfig(kernel_logging_conf.LOGGING)
+            return logging.getLogger('kernel_logger')
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, getattr(self, 'kernel_id', 'uninitialized'))
