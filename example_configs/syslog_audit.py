@@ -40,10 +40,11 @@ LOGGING = {
             'formatter': 'console',
         },
         'audit_handler': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.SysLogHandler',
             'filters': ['audit_add_context'],
             'formatter': 'audit',
-            'args': ('jupyter.log',)
+            'address': ('<SYSLOG_SERVER>', logging.handlers.SYSLOG_UDP_PORT),
+            'facility': logging.handlers.SysLogHandler.LOG_LOCAL7,
         }
     },
     'loggers': {
